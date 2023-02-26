@@ -12,7 +12,9 @@ while len(inp) != 0:
     clientSocket.send(inp.encode(MSGFORMAT))
     if(inp == "X"):
       print(clientSocket.recv(1024).decode())
-      file = inp('Please select a file to access')
+      fileName = input('Please select a file to access')
+      clientSocket.send(fileName.encode(MSGFORMAT))
+      
       
      
 clientSocket.close()
