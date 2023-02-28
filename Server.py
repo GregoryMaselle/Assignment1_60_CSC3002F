@@ -11,39 +11,54 @@ serverSocket.bind((IP, serverPort))
 def findAndSend(reqFile,connectionSocket):
     os.chdir('./Database')
     password = 'abcdefg'
-    pwords = open('passwords.txt','a')
-    for line in pwords:
-        lineList = line.split("/")   #Assuming we store as [filename]/[open or not]/[password]/[attempts]
+    pwords = open('passwords.txt','r')
+    for line in pwords.readlines():
+        lineList = line.split('/')   #Assuming we store as [filename]/[open or not]/[password]/[attempts]
+        for item in lineList:
+            print(item)
         target = lineList[0]
         if target == reqFile:
-            #REQUEST PASSWORD
-            # if no password needed -> 
-                send(reqFile)
+            if (lineList[1] == "open"):
+                sendFile(reqFile, connectionSocket)
+            else:
+                passFail = 3
+                while (passFail > 0):
+                    passreq = "Please input password for "+reqFile
+                    connectionSocket.send(passreq.encode(MSGFORMAT))
+                    passSent = connectionSocket.recv(1024).decode()
+                    if (passSent == lineList[2]):
+                        successMessage = "Correct Password. Sending "+reqFile
+                        connectionSocket.send(successMessage.encode(MSGFORMAT))
+                        sendFile(reqFile,connectionSocket)
+                        
+                    else:
+                        failureMessage = "Password incorrect. You have " + str(passFail-1) + "attempts left."
+                        passFail = passFail - 1
+                        connectionSocket.send(failureMessage.encode(MSGFORMAT))
+
             if password == lineList[1]:
                 #tell the user it was right or wrong
                 #if wrong tell them theyre wrong, maybe add 1 to an attempt counter? 3rd part of file line?
                 # if right -> 
-                    send(reqFile, connectionSocket)
+                    sendFile(reqFile, connectionSocket)
                     
 
-def send(reqFile,connectionSocket):
+def sendFile(reqFile,connectionSocket):
+   # try:
+    print("SENDING FILE")
     file = open(reqFile, 'rb')
     filesize = os.path.getsize(reqFile)
     connectionSocket.send(str(filesize).encode())
     data = file.read()
-    connectionSocket.sendAll(data)
+    print(type(data))
+    connectionSocket.sendall(data)
     connectionSocket.send(b"<END>")
-    connectionSocket.send(hashlib.sha256(data).hexdigest())
-
-    
-
-    
-
-
+    connectionSocket.send(hashlib.sha256(bytes(data)).hexdigest())
+    #except:
+    print()
+    connectionSocket.send("Fatal error in file transfer".encode(MSGFORMAT))
 
 def main():
-    
-
     path = './Database'
     isdir = os.path.isdir(path)
     if isdir is False:
@@ -71,9 +86,9 @@ def main():
             connectionSocket.send(fileDisp.encode(MSGFORMAT))
             reqFile = connectionSocket.recv(1024).decode()
             findAndSend(reqFile,connectionSocket)
+            connectionSocket.close()
         
-    #connectionSocket.close()
-    #ADsdsada.sdfgh - password delimit by " ", check up until "." in file name to ensure full file name included.
+    
 if __name__ == '__main__':
     main()
 
