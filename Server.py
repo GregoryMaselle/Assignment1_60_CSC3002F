@@ -1,6 +1,7 @@
 import socket
 import os
 import hashlib
+import sys
 
 MSGFORMAT = "utf-8"
 serverPort = 12000
@@ -9,6 +10,7 @@ IP = socket.gethostbyname(socket.gethostname())
 serverSocket.bind((IP, serverPort))
 
 def findAndSend(reqFile,connectionSocket):
+    passfail = 3;
     print("Hello World")
     os.chdir('./Database')
     password = 'abcdefg'
@@ -24,20 +26,29 @@ def findAndSend(reqFile,connectionSocket):
                 sendFile(reqFile, connectionSocket)
             else:
                 passFail = 3
+                passreq = "<PREQUEST>Please input password for "+reqFile
+                connectionSocket.send(passreq.encode(MSGFORMAT))
                 while (passFail > 0):
-                    passreq = "Please input password for "+reqFile
-                    connectionSocket.send(passreq.encode(MSGFORMAT))
                     passSent = connectionSocket.recv(1024).decode()
+                    print("\nHELLO THIS IS THE PASS SENT"+passSent)
                     if (passSent == lineList[2]):
-                        successMessage = "Correct Password. Sending "+reqFile
+                        successMessage = "<PACCEPT>Correct Password. Sending "+reqFile+"\n"
                         connectionSocket.send(successMessage.encode(MSGFORMAT))
                         sendFile(reqFile,connectionSocket)
+                        break
                         
                     else:
-                        failureMessage = "Password incorrect. You have " + str(passFail-1) + "attempts left."
+                        #failureMessage = "<PREJECT>Password incorrect. You have " + str(passFail-1) + " attempts left.\n"
+                        failureMessage = "<PREJECT>" + str(passFail-1)
+                        
                         passFail = passFail - 1
                         connectionSocket.send(failureMessage.encode(MSGFORMAT))
-
+                if (passfail == 0):
+                    exitMessage = "You have exceeded the amount of attempts allowed to enter the password.\n"
+                    print(exitMessage)
+                    connectionSocket.send(exitMessage.encode(MSGFORMAT))
+                    sys.exit(0)
+                    
             if password == lineList[1]:
                 #tell the user it was right or wrong
                 #if wrong tell them theyre wrong, maybe add 1 to an attempt counter? 3rd part of file line?
@@ -49,8 +60,8 @@ def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tagasd
    # try:##ss
     print("SENDING FILE")
     file = open(reqFile, 'rb')
-    filesize = os.path.getsize(reqFile)
-    connectionSocket.send(str(filesize).encode())
+    #filesize = os.path.getsize(reqFile)
+    #connectionSocket.send(str(filesize).encode())
     data = file.read()
     print(data)
    # print(type(data))
@@ -92,7 +103,7 @@ def main():
             connectionSocket.send(fileDisp.encode(MSGFORMAT))
             reqFile = connectionSocket.recv(1024).decode()
             findAndSend(reqFile,connectionSocket)
-            connectionSocket.close()
+           # connectionSocket.close()
         
     
 if __name__ == '__main__':
