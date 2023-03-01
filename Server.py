@@ -9,16 +9,18 @@ IP = socket.gethostbyname(socket.gethostname())
 serverSocket.bind((IP, serverPort))
 
 def findAndSend(reqFile,connectionSocket):
+    print("Hello World")
     os.chdir('./Database')
     password = 'abcdefg'
     pwords = open('passwords.txt','r')
     for line in pwords.readlines():
-        lineList = line.split('/')   #Assuming we store as [filename]/[open or not]/[password]/[attempts]
-        for item in lineList:
-            print(item)
+        lineList = line.split('/')   # Assuming we store as [filename]/[open or not]/[password]/[attempts]
+        #for item in lineList:
+            #print(item)
         target = lineList[0]
         if target == reqFile:
             if (lineList[1] == "open"):
+                print(lineList[1])
                 sendFile(reqFile, connectionSocket)
             else:
                 passFail = 3
@@ -39,24 +41,26 @@ def findAndSend(reqFile,connectionSocket):
             if password == lineList[1]:
                 #tell the user it was right or wrong
                 #if wrong tell them theyre wrong, maybe add 1 to an attempt counter? 3rd part of file line?
-                # if right -> 
+                # if right -> ,
                     sendFile(reqFile, connectionSocket)
                     
 
-def sendFile(reqFile,connectionSocket):
-   # try:
+def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tagasd
+   # try:##ss
     print("SENDING FILE")
     file = open(reqFile, 'rb')
     filesize = os.path.getsize(reqFile)
     connectionSocket.send(str(filesize).encode())
     data = file.read()
-    print(type(data))
-    connectionSocket.sendall(data)
-    connectionSocket.send(b"<END>")
-    connectionSocket.send(hashlib.sha256(bytes(data)).hexdigest())
-    #except:
-    print()
-    connectionSocket.send("Fatal error in file transfer".encode(MSGFORMAT))
+    print(data)
+   # print(type(data))
+    connectionSocket.sendall(data+b"<END>")
+    #connectionSocket.send(b"<END>")
+    file.close()
+   # connectionSocket.send(hashlib.sha256(bytes(data)).hexdigest())a
+    #except:    
+    print("Successful")
+    #connectionSocket.send("Fatal error in file transfer".encode(MSGFORMAT))
 
 def main():
     path = './Database'
@@ -82,7 +86,9 @@ def main():
         if ans == "X":
             fileDisp = ""
             for filename in fileList:
-                fileDisp += filename
+                if filename == "passwords.txt":
+                    continue
+                fileDisp += filename + "\n"
             connectionSocket.send(fileDisp.encode(MSGFORMAT))
             reqFile = connectionSocket.recv(1024).decode()
             findAndSend(reqFile,connectionSocket)
@@ -91,5 +97,3 @@ def main():
     
 if __name__ == '__main__':
     main()
-
-
