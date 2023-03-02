@@ -47,11 +47,12 @@ def fileFetch(clientSocket):
     while(response[0:9] == "<PREJECT>"):
       pAttempt = input("Incorrect. Try Again:\n")
       clientSocket.send(pAttempt.encode(MSGFORMAT))
+      print(pAttempt)
       response = clientSocket.recv(1024).decode()
       print("\n"+response[0:10] + " response prefix")
     if(response[0:9]=="<PACCEPT>"):
       goFetch(fileName, clientSocket)
-      
+
 
      
   #fileSize = clientSocket.recv(1024).decode()
@@ -76,7 +77,28 @@ def fileFetch(clientSocket):
   #file.close()
 
   
-
+def fileSend(clientSocket):
+  print(clientSocket.recv(1024).decode())
+  fileName = input('Please enter the file name\n') 
+  clientSocket.send(fileName.encode(MSGFORMAT))
+  print(clientSocket.recv(1024).decode())
+  priv = input("Please enter file privacy\n")
+  clientSocket.send(fileName.encode(MSGFORMAT))
+  print(clientSocket.recv(1024).decode())
+  if (priv != "open"):
+      password = input("Please enter a password for "+fileName+"\n")
+      clientSocket.send(password.encode(MSGFORMAT))
+      print(clientSocket.recv(1024).decode())
+  
+  file = open(fileName, 'rb')
+    #filesize = os.path.getsize(reqFile)
+    #connectionSocket.send(str(filesize).encode())
+  data = file.read()
+  #print(data)
+  # print(type(data))
+  clientSocket.sendall(data+b"<END>")
+  #connectionSocket.send(b"<END>")
+  file.close()
 
 
 def main():
@@ -88,9 +110,10 @@ def main():
   while len(inp) != 0:
       clientSocket.send(inp.encode(MSGFORMAT))
       if(inp == "X"):
-         print("Test filefetch")
+         #print("Test filefetch")
          fileFetch(clientSocket)
-        
+      else:
+          fileSend(clientSocket)
       
   clientSocket.close()
 

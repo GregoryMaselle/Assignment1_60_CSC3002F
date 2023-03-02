@@ -10,7 +10,7 @@ IP = socket.gethostbyname(socket.gethostname())
 serverSocket.bind((IP, serverPort))
 
 def findAndSend(reqFile,connectionSocket):
-    passfail = 3;
+    #passfail = 3;
     print("Hello World")
     os.chdir('./Database')
     password = 'abcdefg'
@@ -20,6 +20,7 @@ def findAndSend(reqFile,connectionSocket):
         #for item in lineList:
             #print(item)
         target = lineList[0]
+        pword = lineList[2]
         if target == reqFile:
             if (lineList[1] == "open"):
                 print(lineList[1])
@@ -31,7 +32,9 @@ def findAndSend(reqFile,connectionSocket):
                 while (passFail > 0):
                     passSent = connectionSocket.recv(1024).decode()
                     print("\nHELLO THIS IS THE PASS SENT"+passSent)
-                    if (passSent == lineList[2]):
+                
+                    if (str(passSent) == (pword)):
+                        #print("Test correct")
                         successMessage = "<PACCEPT>Correct Password. Sending "+reqFile+"\n"
                         connectionSocket.send(successMessage.encode(MSGFORMAT))
                         sendFile(reqFile,connectionSocket)
@@ -43,11 +46,13 @@ def findAndSend(reqFile,connectionSocket):
                         
                         passFail = passFail - 1
                         connectionSocket.send(failureMessage.encode(MSGFORMAT))
-                if (passfail == 0):
+                print(str(passFail)+"PASSFAIL")
+               # print(passfail == 0)
+                if (passFail == 0):
                     exitMessage = "You have exceeded the amount of attempts allowed to enter the password.\n"
                     print(exitMessage)
                     connectionSocket.send(exitMessage.encode(MSGFORMAT))
-                    sys.exit(0)
+                    connectionSocket.close()
                     
             if password == lineList[1]:
                 #tell the user it was right or wrong
@@ -72,6 +77,53 @@ def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tagasd
     #except:    
     print("Successful")
     #connectionSocket.send("Fatal error in file transfer".encode(MSGFORMAT))
+
+def recvFile(connectionSocket):
+    msg = "Ready to receive file - please send file name followed by the data."
+    connectionSocket.send(msg.encode(MSGFORMAT))
+    fName = connectionSocket.recv(1024).decode()
+    msg = "File name received. Please specify whether the file should be open or protected."
+    connectionSocket.send(msg.encode(MSGFORMAT))
+    priv = connectionSocket.recv(1024).decode()
+    if (priv == "open"):
+        msg = "Privacy received. Please send the file in byte form."
+        connectionSocket.send(msg.encode(MSGFORMAT))
+        file = open("passwords.txt", 'a')
+        file.write(fName + "/" + priv + "/"+"a")
+    else:
+        msg = "Privacy received. Please send the desired password."
+        connectionSocket.send(msg.encode(MSGFORMAT))
+        pWord = connectionSocket.recv(1024).decode()
+        msg = "Password received. Please send the file in byte form."
+        connectionSocket.send(msg.encode(MSGFORMAT))
+        file = open("passwords.txt", 'a')
+        file.write(fName + "/" + priv + "/" + pWord)
+
+    done = False
+    fileBytes = b""
+    #fileBytes = clientSocket.recv(1024)
+    while not done:
+        byteData = connectionSocket.recv(1024)
+        #byteData = fileBytes
+        if byteData[-5:] == b"<END>":
+            done = True
+            fileBytes += byteData[:-5]
+            print(byteData)
+            print(fileBytes)
+        else:
+            #byteData = clientSocket.recv(1024)
+            fileBytes += byteData
+        
+        
+        print(os.getcwd())
+        os.chdir("./Database")
+        file = open(fName, "wb")
+        file.write(fileBytes)
+        file.close()
+
+
+    
+    
 
 def main():
     path = './Database'
@@ -104,6 +156,9 @@ def main():
             reqFile = connectionSocket.recv(1024).decode()
             findAndSend(reqFile,connectionSocket)
            # connectionSocket.close()
+        else:
+            recvFile(connectionSocket)
+        
         
     
 if __name__ == '__main__':
