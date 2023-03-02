@@ -83,7 +83,7 @@ def fileSend(clientSocket):
   clientSocket.send(fileName.encode(MSGFORMAT))
   print(clientSocket.recv(1024).decode())
   priv = input("Please enter file privacy\n")
-  clientSocket.send(fileName.encode(MSGFORMAT))
+  clientSocket.send(priv.encode(MSGFORMAT))
   print(clientSocket.recv(1024).decode())
   if (priv != "open"):
       password = input("Please enter a password for "+fileName+"\n")

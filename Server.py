@@ -88,16 +88,18 @@ def recvFile(connectionSocket):
     if (priv == "open"):
         msg = "Privacy received. Please send the file in byte form."
         connectionSocket.send(msg.encode(MSGFORMAT))
+        os.chdir("./Database")
         file = open("passwords.txt", 'a')
-        file.write(fName + "/" + priv + "/"+"a")
+        file.write(fName + "/" + priv + "/" + "a/" + "\n")
     else:
         msg = "Privacy received. Please send the desired password."
         connectionSocket.send(msg.encode(MSGFORMAT))
         pWord = connectionSocket.recv(1024).decode()
         msg = "Password received. Please send the file in byte form."
         connectionSocket.send(msg.encode(MSGFORMAT))
+        os.chdir("./Database")
         file = open("passwords.txt", 'a')
-        file.write(fName + "/" + priv + "/" + pWord)
+        file.write(fName + "/" + priv + "/" + pWord + "/" + "\n")
 
     done = False
     fileBytes = b""
@@ -106,17 +108,18 @@ def recvFile(connectionSocket):
         byteData = connectionSocket.recv(1024)
         #byteData = fileBytes
         if byteData[-5:] == b"<END>":
-            done = True
             fileBytes += byteData[:-5]
+            print("Test")
             print(byteData)
             print(fileBytes)
+            done = True
         else:
             #byteData = clientSocket.recv(1024)
             fileBytes += byteData
         
         
         print(os.getcwd())
-        os.chdir("./Database")
+        #os.chdir("./Database")
         file = open(fName, "wb")
         file.write(fileBytes)
         file.close()
