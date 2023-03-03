@@ -13,6 +13,7 @@ if (IP == "123"):
 def goFetch(fileName, clientSocket):
   print("gofetch run\n")
   done = False
+  hashCode = clientSocket.recv(1024).decode()[12:]
   fileBytes = b""
   byteData = clientSocket.recv(1024)[12:]
   #print(byteData)
@@ -37,7 +38,7 @@ def goFetch(fileName, clientSocket):
     hValidation = hashlib.sha256()
     hValidation.update(fileBytes)
     #hValidation.hexdigest()
-    print(hValidation.hexdigest())
+    print(hValidation.hexdigest() == hashCode)
     file = open(fileName, "wb")
     file.write(fileBytes)
     file.close()
