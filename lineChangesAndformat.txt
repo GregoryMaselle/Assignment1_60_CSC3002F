@@ -5,7 +5,7 @@ Command-1
 Data-2
 
 
-9 char long always.
+subtype is 7 char long always excluding <>.
 
 
 
