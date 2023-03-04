@@ -1,5 +1,6 @@
 import socket
 import os
+import hashlib
 
 MSGFORMAT = "utf-8"
 IP = input("Enter IP: ")
@@ -12,12 +13,15 @@ if (IP == "123"):
 def goFetch(fileName, clientSocket):
   print("gofetch run\n")
   done = False
+  hashCode = clientSocket.recv(1024).decode()[12:]
   fileBytes = b""
-  #fileBytes = clientSocket.recv(1024)
+  byteData = clientSocket.recv(1024)[12:]
+  #print(byteData)
   while not done:
-    byteData = clientSocket.recv(1024)
+    #byteData = clientSocket.recv(1024)
     #byteData = fileBytes
     if byteData[-5:] == b"<END>":
+      print("Test")
       done = True
       fileBytes += byteData[:-5]
       print(byteData)
@@ -25,12 +29,16 @@ def goFetch(fileName, clientSocket):
     else:
       #byteData = clientSocket.recv(1024)
       fileBytes += byteData
+      byteData = clientSocket.recv(1024)
       
       
     print("TEST")
-    print
     print(os.getcwd())
     os.chdir("./clientDownloads")
+    hValidation = hashlib.sha256()
+    hValidation.update(fileBytes)
+    #hValidation.hexdigest()
+    print(hValidation.hexdigest() == hashCode)
     file = open(fileName, "wb")
     file.write(fileBytes)
     file.close()
@@ -44,7 +52,7 @@ def fileFetch(clientSocket):
   fileName = input('Please select a file to access\n')
   clientSocket.send(("<2><REQFILE>"+fileName).encode(MSGFORMAT))
   response = clientSocket.recv(1024).decode()
-  print(response[3:12])
+  print("RESPONSE BEFORE GOFETCH:"+response[3:12])
   if (response[3:12] == "<PREQUES>"):
     pAttempt = input("Please Enter Password for "+fileName+"\n")
     clientSocket.send(("<2><PASSTRY>"+pAttempt).encode(MSGFORMAT))
@@ -58,9 +66,6 @@ def fileFetch(clientSocket):
     if(response[3:12]=="<PACCEPT>"):
       goFetch(fileName, clientSocket)
 
-
-     
-  #fileSize = clientSocket.recv(1024).decode()
   else: 
     goFetch(fileName,clientSocket)
     #done = False
@@ -83,15 +88,15 @@ def fileFetch(clientSocket):
 
   
 def fileSend(clientSocket):
-  print(clientSocket.recv(1024).decode())
+  print(clientSocket.recv(1024).decode()[12:])
   fileName = input('Please enter the file name\n') 
-  clientSocket.send(fileName.encode(MSGFORMAT))
+  clientSocket.send(("<2><FILENAM>"+fileName).encode(MSGFORMAT))
   fileNameReply = clientSocket.recv(1024).decode()
 
-  while (fileNameReply[0:9] == "<NMREJCT>"):
+  while (fileNameReply[3:12] == "<NMREJCT>"):
      print(fileNameReply)
      fileName = input("File name already in use. Choose a different name or 'abort'. ")
-     clientSocket.send(fileName.encode(MSGFORMAT))
+     clientSocket.send(("<2><FILENAM>"+fileName).encode(MSGFORMAT))
      fileNameReply = clientSocket.recv(1024).decode()
      
      if (fileName == "abort"):
@@ -100,12 +105,12 @@ def fileSend(clientSocket):
  # print(fileNameReply)
   print("File name received. Please specify whether the file should be open or protected.")
   priv = input("Please enter file privacy\n")
-  clientSocket.send(priv.encode(MSGFORMAT))
-  print(clientSocket.recv(1024).decode())
+  clientSocket.send(("<2><FILPRIV>"+priv).encode(MSGFORMAT))
+  print(clientSocket.recv(1024).decode()[12:0])
   if (priv != "open"):
       password = input("Please enter a password for "+fileName+"\n")
-      clientSocket.send(password.encode(MSGFORMAT))
-      print(clientSocket.recv(1024).decode())
+      clientSocket.send(("<2><PASSEND>"+password).encode(MSGFORMAT))
+      print(clientSocket.recv(1024).decode()[12:0])
   
   file = open(fileName, 'rb')
     #filesize = os.path.getsize(reqFile)
@@ -113,7 +118,7 @@ def fileSend(clientSocket):
   data = file.read()
   #print(data)
   # print(type(data))
-  clientSocket.sendall(data+b"<END>")
+  clientSocket.sendall(b"<2><SFILSEN>"+data+b"<END>")
   #connectionSocket.send(b"<END>")
   file.close()
 

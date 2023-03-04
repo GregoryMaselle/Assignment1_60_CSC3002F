@@ -4,9 +4,10 @@ import hashlib
 import sys
 
 MSGFORMAT = "utf-8"
-serverPort = 12000
+serverPort = 9999
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 IP = socket.gethostbyname(socket.gethostname())
+print(IP)
 serverSocket.bind((IP, serverPort))
 
 def findAndSend(reqFile,connectionSocket):
@@ -23,6 +24,7 @@ def findAndSend(reqFile,connectionSocket):
         if target == reqFile:
             if (lineList[1] == "open"):
                 print(lineList[1])
+                connectionSocket.send("<0><NONPASS>NOPASSREQUIRED".encode(MSGFORMAT))
                 sendFile(reqFile, connectionSocket)
             else:
                 passFail = 3
@@ -55,56 +57,57 @@ def findAndSend(reqFile,connectionSocket):
                     
 
 def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tagasd
-   # try:##ss
     print("SENDING FILE")
     file = open(reqFile, 'rb')
-    #filesize = os.path.getsize(reqFile)
-    #connectionSocket.send(str(filesize).encode())
     data = file.read()
+    hValidation = hashlib.sha256()
+    hValidation.update(data)
+    #hValidation.digest()
+    #hValidation.hexdigest()
+    #print(hValidation.hexdigest())
+    connectionSocket.send(("<2><HEXSEND>" + hValidation.hexdigest()).encode(MSGFORMAT))
     print(data)
-   # print(type(data))
-    connectionSocket.sendall(data+b"<END>")
-    #connectionSocket.send(b"<END>")
+    connectionSocket.sendall(b"<2><SFILSEN>"+data+b"<END>")
     file.close()
-   # connectionSocket.send(hashlib.sha256(bytes(data)).hexdigest())a
-    #except:    
     print("Successful")
-    #connectionSocket.send("Fatal error in file transfer".encode(MSGFORMAT))
+
 
 def recvFile(connectionSocket):
     msg = "Ready to receive file - please send file name followed by the data."
-    connectionSocket.send(msg.encode(MSGFORMAT))
+    connectionSocket.send(("<0><RCVREDY>"+msg).encode(MSGFORMAT))
     passwordFile = open("./Database/passwords.txt")
     flag = True
     while flag: 
         flag = False
-        fName = connectionSocket.recv(1024).decode()
+        fName = connectionSocket.recv(1024).decode()[12:]
         print("FNAME IS THIS: "+fName)
         if (fName == "abort"):
+            connectionSocket.shutdown(socket.SHUT_RDWR)
+            connectionSocket.close()
             return
         for line in passwordFile:
             print(line)
             if (fName == line.split("/")[0]):
-                msg = "<NMREJCT>This filename already exists. Choose another one or type 'abort' to exit."
+                msg = "<0><NMREJCT>This filename already exists. Choose another one or type 'abort' to exit."
                 connectionSocket.send(msg.encode(MSGFORMAT))
                 flag = True
         passwordFile.seek(0)
         print(flag)
         
     #print(msg)
-    msg = "<NAMESUCCESS>File name received. Please specify whether the file should be open or protected."
+    msg = "<0><NMSCCSS>File name received. Please specify whether the file should be open or protected."
     connectionSocket.send(msg.encode(MSGFORMAT))
-    priv = connectionSocket.recv(1024).decode()
+    priv = connectionSocket.recv(1024).decode()[12:]
     if (priv == "open"):
         msg = "Privacy received. Please send the file in byte form."
-        connectionSocket.send(msg.encode(MSGFORMAT))
+        connectionSocket.send(("<1><PRIVREC>"+msg).encode(MSGFORMAT))
         os.chdir("./Database")
         file = open("passwords.txt", 'a')
         file.write(fName + "/" + priv + "/" + "a/" + "\n")
     else:
         msg = "Privacy received. Please send the desired password."
-        connectionSocket.send(msg.encode(MSGFORMAT))
-        pWord = connectionSocket.recv(1024).decode()
+        connectionSocket.send(("<0><PASSREQ>"+msg).encode(MSGFORMAT))
+        pWord = connectionSocket.recv(1024).decode()[12:]
         msg = "Password received. Please send the file in byte form."
         connectionSocket.send(msg.encode(MSGFORMAT))
         os.chdir("./Database")
@@ -114,8 +117,9 @@ def recvFile(connectionSocket):
     done = False
     fileBytes = b""
     #fileBytes = clientSocket.recv(1024)
+    byteData = connectionSocket.recv(1024)[12:]
     while not done:
-        byteData = connectionSocket.recv(1024)
+        #byteData = connectionSocket.recv(1024)
         #byteData = fileBytes
         if byteData[-5:] == b"<END>":
             fileBytes += byteData[:-5]
@@ -126,6 +130,7 @@ def recvFile(connectionSocket):
         else:
             #byteData = clientSocket.recv(1024)
             fileBytes += byteData
+            byteData = connectionSocket.recv(1024)
         
         
         print(os.getcwd())
@@ -133,10 +138,6 @@ def recvFile(connectionSocket):
         file = open(fName, "wb")
         file.write(fileBytes)
         file.close()
-
-
-    
-    
 
 def main():
     path = './Database'
