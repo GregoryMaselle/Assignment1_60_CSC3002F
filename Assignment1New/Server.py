@@ -46,15 +46,18 @@ def findAndSend(reqFile,connectionSocket):#This method is run when a client trie
                             break
                             
                         else:
-                            failureMessage = "<0><PREJECT>Password incorrect. You have " + str(passFail-1)+" attempts left.\n"#an error message is sent after an incorrect password attempt
-                            
                             passFail = passFail - 1
-                            connectionSocket.send(failureMessage.encode(MSGFORMAT))
-                    if (passFail == 0):#once the client fails the password input 3 times
-                        exitMessage = "You have exceeded the amount of attempts allowed to enter the password.\n"#an error message is sent
-                        print(exitMessage)
-                        connectionSocket.send(("<1><EXCPASS>"+exitMessage).encode(MSGFORMAT))
-                        connectionSocket.close()#and the socket is closed
+                            if (passFail >0):
+                                failureMessage = "<0><PREJECT>Password incorrect. You have " + str(passFail)+" attempts left."#an error message is sent after an incorrect password attempt
+                                connectionSocket.send(failureMessage.encode(MSGFORMAT))
+                            else:
+                                exitMessage = "You have exceeded the amount of attempts allowed to enter the password.\n"#an error message is sent
+                                print(exitMessage)
+                                connectionSocket.send(("<1><EXCPASS>"+exitMessage).encode(MSGFORMAT))
+                                connectionSocket.close()
+
+                    #if (passFail == 0):#once the client fails the password input 3 times
+                        #and the socket is closed
         if (valid == False):#check in case the filename is not found in passwords.txt
             connectionSocket.send("<0><INVNAME>INVALIDNAME".encode(MSGFORMAT))
             print(reqFile + "THIS IS REQFILE")

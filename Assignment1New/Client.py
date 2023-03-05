@@ -11,7 +11,7 @@ if (IP == "123"):
 
 
 def goFetch(fileName, clientSocket):
-  print("gofetch run\n")
+  #print("gofetch run\n")
   done = False
   hValidation = hashlib.sha256()
   os.chdir("./clientDownloads")
@@ -86,7 +86,7 @@ def goFetch(fileName, clientSocket):
 
 
 def fileFetch(clientSocket):
-  print(os.getcwd())
+  #print(os.getcwd())
   #os.chdir("./clientDownloads")
   print(clientSocket.recv(1024).decode()[12:])
   fileName = input('Please select a file to access\n')
@@ -95,7 +95,7 @@ def fileFetch(clientSocket):
   
   clientSocket.send(("<2><REQFILE>"+fileName).encode(MSGFORMAT))
   response = clientSocket.recv(1024).decode()
-  print("RESPONSE BEFORE GOFETCH:"+response[3:12])
+  #print("RESPONSE BEFORE GOFETCH:"+response[3:12])
 
   while (response[3:12] == "<INVNAME>"):
      fileName = input("File not found. Choose another one\n")
@@ -108,14 +108,18 @@ def fileFetch(clientSocket):
     response = clientSocket.recv(1024).decode()
 
     while(response[3:12] == "<PREJECT>"):
-      pAttempt = input("Incorrect. Try Again:\n")
+      print(response[12:])
+      pAttempt = input("")
       clientSocket.send(("<2><PASSTRY>"+pAttempt).encode(MSGFORMAT))
-      print(pAttempt)
+      #print(pAttempt)
       response = clientSocket.recv(1024).decode()
-      print("\n"+response[0:12] + " response prefix")
-
+      #print("\n"+response[0:12] + " response prefix")
+    #print(response[3:12])
     if(response[3:12]=="<PACCEPT>"):
       goFetch(fileName, clientSocket)
+    elif(response[3:12] == "<EXCPASS>"):
+      print("Number of password attempts exceeded. Shutting connection.")
+      clientSocket.close()
 
   else: 
     goFetch(fileName,clientSocket)
