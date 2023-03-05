@@ -71,6 +71,13 @@ def downloadFile(fName, clientSocket):
     print("File has been downloaded and the connection will now close - please reconnect if you would like to upload/download any more files.") # informs the user that the connection will now close and the application will end.
     clientSocket.close() # closes the socket that was used for connecting to the server.
     exit(1) # exits the application.
+  else:
+    # if the hash codes do not match, the server and user is notified of this, the file is deleted on the client side and the connection and application is closed.
+    clientSocket.send("<0><INVDATA>The hash code received does not match that calculated on the client side.".encode())
+    print("Data received is invalid, please reconnect and try again.")
+    os.remove(fName)
+    clientSocket.close()
+    exit(1)
 
 def sendFile(clientSocket):
   print(clientSocket.recv(1024).decode()[12:]) 
