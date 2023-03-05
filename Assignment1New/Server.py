@@ -188,6 +188,11 @@ def main():#Main method ran on server start
         print(ans)
         if ans == "X":#If the client chooses to download a file
             fileDisp = "<2><LISTFIL>"
+            if(len(fileList)==1):
+                print("There are no files to access. Aborting.")
+                connectionSocket.send("<0><MPTYDTB>Database is empty. Aborting.".encode())
+                connectionSocket.close()
+                continue
             for filename in fileList:#loop to display all of the files on the server, the passwords.txt file is hidden
                 if filename == "passwords.txt":
                     continue
