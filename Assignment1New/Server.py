@@ -79,21 +79,21 @@ def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tag
     #file = open(reqFile, 'rb')
    # data = file.read()
     hValidation = hashlib.sha256()
-    with open(reqFile, "rb") as f:
+    with open(reqFile, "rb") as f:#opens file and reads and sends file byte data a chunk at a time(if the file is big enough)
         while True:
             data = f.read(4096)
  
-            if not data:
+            if not data:#loops until no data is being sent
                 break
  
             connectionSocket.sendall(data)
-            hValidation.update(data)
+            hValidation.update(data)#hash is updated with new data
             #print("sending still")
             msg = connectionSocket.recv(1024).decode(MSGFORMAT)
-        connectionSocket.send(b"<END>")
+        connectionSocket.send(b"<END>")#sends tag to show end of data
     connectionSocket.send(("<2><HEXVALU>"+hValidation.hexdigest()).encode(MSGFORMAT))
     response = connectionSocket.recv(1024).decode()
-    if(response[3:12] == "INVDATA"):
+    if(response[3:12] == "INVDATA"):#error if hash of data does not match on either side
         print("File did not send successfully - hash codes not equal.")
         connectionSocket.close()
         os.chdir("../")
@@ -101,7 +101,7 @@ def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tag
     else:
         os.chdir("../")
         print("File sent successfully.")
-        connectionSocket.close()
+        connectionSocket.close()#socket is closed after succesful file send
         return        
     
     #hValidation.digest()
@@ -111,15 +111,15 @@ def sendFile(reqFile,connectionSocket): # Sends filesize, bytes with a tag
    #     connectionSocket.sendall(b"<2><SFILSEN>"+data+b"<END>")
     #   connectionSocket.sendall(("<2><HEXSEND>"+hValidation.hexdigest()).encode(MSGFORMAT)+b"<2><SFILSEN>"+data+b"<END>")
     #file.close()
-    os.chdir("../")
-    print("Successful")
 
 
-def recvFile(connectionSocket):
+
+def recvFile(connectionSocket):#method ran when client is uploading a file to the server
     msg = "Ready to receive file - please send file name followed by the data."
     connectionSocket.send(("<0><RCVREDY>"+msg).encode(MSGFORMAT))
     passwordFile = open("./Database/passwords.txt")
     flag = True
+    fName = ""
     while flag: 
         flag = False
         fName = connectionSocket.recv(1024).decode()[12:]
@@ -171,6 +171,29 @@ def recvFile(connectionSocket):
             hValidation.update(data)
       #print(b"WRITING DATA "+data)
             connectionSocket.send("Data recieved".encode(MSGFORMAT))
+    
+    hashCode = connectionSocket.recv(1024).decode()[12:]
+    print(hashCode)
+    #connectionSocket.send(("<2><HEXVALU>"+hValidation.hexdigest()).encode(MSGFORMAT))
+    #response = connectionSocket.recv(1024).decode()
+    if(hValidation.hexdigest() == hashCode):
+        print("Test")
+        connectionSocket.send("<0><VLDDATA>The hash codes are equal and file has been uploaded - please reconnect if you would like to download/upload any more files.".encode(MSGFORMAT))
+  #   file = open(fileName, "wb")
+  #   file.write(fileBytes)
+  #   file.close()
+        print("File was uploaded successfully and hash codes matched.")
+        connectionSocket.close()
+        os.chdir("../")
+        return
+    else:
+        connectionSocket.send("<0><INVDATA>The hash codes do not match. Please retransmit the data.".encode(MSGFORMAT))
+  #   goFetch(fileName, clientSocket)
+        print("Data received is invalid, connection has been closed and client has been prompted to try again.")
+        os.remove(fName)
+        connectionSocket.close()
+        os.chdir("../")
+        return
     # hashCode = connectionSocket.recv(1024).decode()[12:]
     # done = False
     # fileBytes = b""
@@ -238,7 +261,7 @@ def main():#Main method ran on server start
             reqFile = connectionSocket.recv(1024).decode()[12:]
             findAndSend(reqFile,connectionSocket)#the file the client would like to download is used as a parameter
            # connectionSocket.close()
-        elif ans == "Y":
+        elif ans == "Y":#If the client chooses to upload a file
             recvFile(connectionSocket)
         else:
             continue

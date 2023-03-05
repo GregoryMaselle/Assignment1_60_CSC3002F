@@ -28,7 +28,7 @@ def goFetch(fileName, clientSocket):
       #print(b"WRITING DATA "+data)
       clientSocket.send("Data recieved".encode(MSGFORMAT))
   hashCode = clientSocket.recv(1024).decode()[12:]
-  if(hValidation.hexdigest() == "hashCode"):
+  if(hValidation.hexdigest() == hashCode):
     clientSocket.send("<0><VLDDATA>The hash codes are equal - file is being downloaded.".encode(MSGFORMAT))
   #   file = open(fileName, "wb")
   #   file.write(fileBytes)
@@ -166,15 +166,17 @@ def fileSend(clientSocket):
   clientSocket.send(("<2><HEXVALU>"+hValidation.hexdigest()).encode(MSGFORMAT))
   response = clientSocket.recv(1024).decode()
   if(response[3:12] == "INVDATA"):
-      print("File did not send successfully - hash codes not equal.")
+      print("File did not send successfully - hash codes not equal. Please reconnect and try again.")
+      print(response[12:])
       clientSocket.close()
-      os.chdir("../")
-      return
+      #os.chdir("../")
+      exit(1)
   else:
-      os.chdir("../")
+      #os.chdir("../")
       print("File sent successfully.")
+      print(response[12:])
       clientSocket.close()
-      return    
+      exit(1)    
   # file = open(fileName, 'rb')
   #   #filesize = os.path.getsize(reqFile)
   #   #connectionSocket.send(str(filesize).encode())
