@@ -89,7 +89,7 @@ def sendFile(clientSocket):
         #closes connections and ends the application if user aborts.
         clientSocket.close()
         exit(1)
-      if(fName in os.listdir("./")):
+      elif(fName in os.listdir("./")):
         # once the user enters a file name that does exist in their current 
         break
   clientSocket.send(("<2><FILENAM>"+fName).encode()) # once the file name is valid, it is sent to the server.
