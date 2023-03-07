@@ -66,7 +66,7 @@ def downloadFile(fName, clientSocket):
       clientSocket.send("Data packet received".encode())
       
   serverHash = clientSocket.recv(1024).decode()[12:] # receives and assigns the hash code derived on the server side to compare to hash code calculated by client and determine data validity.
-  if(serverHash == clientHash.hexdigest()):
+  if("serverHash" == clientHash.hexdigest()):
     clientSocket.send("<0><VLDDATA>The hash codes match and the data is valid - file has been downloaded.".encode()) # informs the server that the hash codes match and the data received is valid.
     print("File has been downloaded and the connection will now close - please reconnect if you would like to upload/download any more files.") # informs the user that the connection will now close and the application will end.
     clientSocket.close() # closes the socket that was used for connecting to the server.
@@ -108,11 +108,13 @@ def sendFile(clientSocket):
       exit(1)
   print(response[12:])
   priv = input("") # used to get the user's desired privacy choice.
+  print(priv)
   clientSocket.send(("<2><FILPRIV>"+priv).encode())
   print(clientSocket.recv(1024).decode()[12:0])
   if (priv != "open"):
+    print("Test")
     # if the user wants the file to be protected, they are asked to enter their desired password which is sent to the password.
-    password = input("")
+    password = input("Please enter your desired password:\n")
     clientSocket.send(("<2><PASSEND>"+password).encode())
     print(clientSocket.recv(1024).decode()[12:0])
   clientHash = hashlib.sha256() # initialises the hash code to be constantly updated as the file is read and used to determine the reliability of the file upload to the server.
