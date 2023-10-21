@@ -17,6 +17,4 @@ Usage is really simple. Just make sure to run ```python server.py``` before runn
 ## A Note on Collaboration
 
 This code was developed by GregoryMaselle, TaahirSuleman and prashanthPadiachy. server.py was coded by all 3, and each collaborator coded their own client.py files.
-MSLGRE001_Client.py = GregoryMaselle
-PDCPRA001Client.py = prashanthPadiachy
-SLMTAA007_Client.py = TaahirSuleman
+MSLGRE001_Client.py = GregoryMaselle, PDCPRA001Client.py = prashanthPadiachy, SLMTAA007_Client.py = TaahirSuleman.
