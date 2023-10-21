@@ -1,5 +1,0 @@
-METHOD REQUEST_TYPE (control, command, )
-SUBTYPE: (pass request/pass attempt/file request etc)
-IP: 
-
-DATA [String/Bytes]
